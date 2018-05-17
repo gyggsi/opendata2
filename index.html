@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Jugendbefragung</title>
+    <meta charset="UTF-8">
+
+    <link rel="stylesheet" href="node_modules/dc/dc.min.css">
+    <link rel="stylesheet" href="node_modules/leaflet/dist/leaflet.css">
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/main.css">
+
+    <script src="node_modules/dc/node_modules/d3/d3.min.js"></script>
+    <script src="node_modules/dc/node_modules/crossfilter/crossfilter.min.js"></script>
+    <script src="node_modules/dc/dc.js"></script>
+    <script src="node_modules/underscore/underscore-min.js"></script>
+</head>
+
+
+
+<body>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-12 dc-data-count dc-chart" id="data-count">
+                <h2>Jugendbefragung
+                    <small>
+                    <span class="filter-count"> Filter ausgewählt</span> |
+                    <a id="all" href="#">Alle zurücksetzen</a> Aktueller Filter: <span class="filter"></span>
+                </small>
+                </h2>
+            </div>
+        </div>
+
+
+
+        <div class="row" id="control-row">
+
+            <div class="col-md-3">
+                <h4>Geschlecht
+                    <small><a id="Geschlecht" href="#">zurücksetzen</a></small>
+                </h4>
+                <div class="dc-chart" id="chart-Geschlecht"></div>
+            </div>
+
+            <div class="col-md-3">
+                <h4>Alter
+                    <small><a id="Alter" href="#">zurücksetzen</a></small>
+                </h4>
+                <div class="dc-chart" id="chart-Alter"></div>
+            </div>
+
+            <div class="col-md-3">
+                <h4>Schultyp
+                    <small><a id="Schultyp" href="#">zurücksetzen</a></small>
+                </h4>
+                <div class="dc-chart" id="chart-Schultyp"></div>
+            </div>
+
+            <div class="col-md-3">
+                <h4>Befragungsjahr
+                    <small><a id="Befragungsjahr" href="#">zurücksetzen</a></small>
+                </h4>
+                <div class="dc-chart" id="chart-Befragungsjahr"></div>
+            </div>
+
+
+
+        </div>
+
+
+        <div class="row" id="control-row">
+
+            <div class="col-md-3">
+                <h4>Wie gefällt es dir in der Schule?
+                    <small><a id="GefallenSchule" href="#">zurücksetzen</a></small>
+                </h4>
+                <div class="dc-chart" id="chart-GefallenSchule"></div>
+            </div>
+
+            <div class="col-md-3">
+                <h4>Was würdest du in der Schule gerne verändern?
+                    <small><a id="AendernSchule" href="#">zurücksetzen</a></small>
+                </h4>
+                <div class="dc-chart" id="chart-AendernSchule"></div>
+            </div>
+
+            <div class="col-md-3">
+                <h4>Welches ist dein Lieblingsfach?
+                    <small><a id="Lieblingsfach" href="#">zurücksetzen</a></small>
+                </h4>
+                <div class="dc-chart" id="chart-Lieblingsfach"></div>
+            </div>
+
+            <div class="col-md-3">
+                <h4>Was ist dein Berufswunsch?
+                    <small><a id="Berufswunsch" href="#">zurücksetzen</a></small>
+                </h4>
+                <div class="dc-chart" id="chart-Berufswunsch"></div>
+            </div>
+
+
+
+        </div>
+        
+    <div class="row" id="control-row">
+
+            <div class="col-md-3">
+                <h4>Machst du dir Sorgen über deine schulischen Leistungen?
+                    <small><a id="SorgenSchule" href="#">zurücksetzen</a></small>
+                </h4>
+                <div class="dc-chart" id="chart-SorgenSchule"></div>
+            </div>
+
+            <div class="col-md-3">
+                <h4>Machst du dir Sorgen über deine Lehrstelle/Studienplatz?
+                    <small><a id="SorgenAusbildung" href="#">zurücksetzen</a></small>
+                </h4>
+                <div class="dc-chart" id="chart-SorgenAusbildung"></div>
+            </div>
+
+            <div class="col-md-3">
+                <h4>Hast du familiäre Sorgen?
+                    <small><a id="SorgenFamilie" href="#">zurücksetzen</a></small>
+                </h4>
+                <div class="dc-chart" id="chart-SorgenFamilie"></div>
+            </div>
+
+            <div class="col-md-3">
+                <h4>Wie stark beschäftigt dich Rassismus?
+                    <small><a id="Rassismus" href="#">zurücksetzen</a></small>
+                </h4>
+                <div class="dc-chart" id="chart-Rassismus"></div>
+            </div>
+
+
+
+        </div>
+    </div>
+
+    
+    
+    
+
+    <script type="text/javascript">
+        d3.json('/Schule_Random.json', function(error, data) { 
+            console.log(data);
+            var SchuleData = data.Schulen;
+
+            _.each(SchuleData, function(d) {
+                d.AnzahlRandom = +d.AnzahlRandom;
+            }); 
+      
+            var ndx = crossfilter(data);
+
+            var GeschlechtDim = ndx.dimension(dc.pluck('Geschlecht'));
+            var AlterDim = ndx.dimension(dc.pluck('Alter'));
+            var SchultypDim = ndx.dimension(dc.pluck('Schultyp'));
+            var BefragungsjahrDim = ndx.dimension(dc.pluck('Befragungsjahr'));
+
+
+            
+
+            var GefallenSchuleDim = ndx.dimension(function(d) {
+                return d.GefallenSchule;
+            });
+            var AendernSchuleDim = ndx.dimension(function(d) {
+                return d.AendernSchule;
+            });
+            var LieblingsfachDim = ndx.dimension(function(d) {
+                return d.Lieblingsfach;
+            });
+            var BerufswunschDim = ndx.dimension(function(d) {
+                return d.Berufswunsch;
+            });
+            
+            var SorgenSchuleDim = ndx.dimension(function(d) {
+                return d.SorgenSchule;
+            });
+            var SorgenAusbildungDim = ndx.dimension(function(d) {
+                return d.SorgenAusbildung;
+            });
+            var SorgenFamilieDim = ndx.dimension(function(d) {
+                return d.SorgenFamilie;
+            });
+            var RassismusDim = ndx.dimension(function(d) {
+                return d.Rassismus;
+            });
+
+
+
+ 
+            var all = ndx.groupAll().reduceSum(function(d) {
+                return d['Anzahl Random']
+            });
+            
+            
+            var countPerGeschlecht = GeschlechtDim.group().reduceSum(function(d) {
+                return d['Anzahl Random']
+            });
+            var countPerAlter = AlterDim.group().reduceSum(function(d) {
+                return d['Anzahl Random']
+            });
+            var countPerSchultyp = SchultypDim.group().reduceSum(function(d) {
+                return d['Anzahl Random']
+            });
+            var countPerBefragungsjahr = BefragungsjahrDim.group().reduceSum(function(d) {
+                return d['Anzahl Random']
+            });
+            var countPerGefallenSchule = GefallenSchuleDim.group().reduceSum(function(d) {
+                return d['Anzahl Random']
+            });
+            var countPerAendernSchule = AendernSchuleDim.group().reduceSum(function(d) {
+                return d['Anzahl Random']
+            });
+            var countPerLieblingsfach = LieblingsfachDim.group().reduceSum(function(d) {
+                return d['Anzahl Random']
+            });
+            var countPerBerufswunsch = BerufswunschDim.group().reduceSum(function(d) {
+                return d['Anzahl Random']
+            });
+            var countPerSorgenSchule = SorgenSchuleDim.group().reduceSum(function(d) {
+                return d['Anzahl Random']
+            });
+            var countPerSorgenAusbildung = SorgenAusbildungDim.group().reduceSum(function(d) {
+                return d['Anzahl Random']
+            });
+            var countPerSorgenFamilie = SorgenFamilieDim.group().reduceSum(function(d) {
+                return d['Anzahl Random']
+            });
+            var countPerRassismus = RassismusDim.group().reduceSum(function(d) {
+                return d['Anzahl Random']
+            });
+
+
+            
+            var GeschlechtChart = dc.pieChart('#chart-Geschlecht');
+            var AlterChart = dc.pieChart('#chart-Alter');
+            var SchultypChart = dc.pieChart('#chart-Schultyp');
+            var BefragungsjahrChart = dc.pieChart('#chart-Befragungsjahr');
+            var GefallenSchuleChart = dc.rowChart('#chart-GefallenSchule');
+            var AendernSchuleChart = dc.rowChart('#chart-AendernSchule')
+            .rowsCap(10)
+                .othersGrouper(false);
+            var LieblingsfachChart = dc.rowChart('#chart-Lieblingsfach');
+            var BerufswunschChart = dc.rowChart('#chart-Berufswunsch')
+            .rowsCap(10)
+                .othersGrouper(false);;
+             var SorgenSchuleChart = dc.rowChart('#chart-SorgenSchule');
+            var SorgenAusbildungChart = dc.rowChart('#chart-SorgenAusbildung');
+            var SorgenFamilieChart = dc.rowChart('#chart-SorgenFamilie');
+            var RassismusChart = dc.rowChart('#chart-Rassismus');
+            var dataCount = dc.dataCount('#data-count'); // was macht das? 
+
+
+            
+            GeschlechtChart
+                .height(200)
+                .dimension(GeschlechtDim)
+                .group(countPerGeschlecht)
+                .innerRadius(50)
+                .colors(d3.scale.ordinal().range(['#004D40', '#00796b', '#4db6ac', '#b2dfdb', '#c0f2f1']));
+
+
+
+            AlterChart
+                .height(200)
+                .dimension(AlterDim)
+                .group(countPerAlter)
+                .innerRadius(50)
+                .colors(d3.scale.ordinal().range(['#004D40', '#00796b', '#4db6ac', '#b2dfdb', '#c0f2f1']));
+
+
+            SchultypChart
+                .height(200)
+                .dimension(SchultypDim)
+                .group(countPerSchultyp)
+                .innerRadius(50)
+                .colors(d3.scale.ordinal().range(['#004D40', '#00796b', '#4db6ac', '#b2dfdb', '#c0f2f1']));
+
+            BefragungsjahrChart
+                .height(200)
+                .dimension(BefragungsjahrDim)
+                .group(countPerBefragungsjahr)
+                .innerRadius(50)
+                .colors(d3.scale.ordinal().range(['#004D40', '#00796b', '#4db6ac', '#b2dfdb', '#c0f2f1']));
+
+
+            
+            GefallenSchuleChart
+                .height(300)
+                .dimension(GefallenSchuleDim)
+                .group(countPerGefallenSchule)
+                .ordering(function(d) {
+                    return d['Anzahl Random']
+                })
+                .margins({
+                    top: 30,
+                    right: 30,
+                    bottom: -1,
+                    left: 30
+                }) 
+                .title(function(d) {
+                    return d.value
+                })
+                .renderTitleLabel(true)
+                .elasticX(true)
+                .ordinalColors(['#004D40', '#00796b', '#4db6ac', '#b2dfdb', '#c0f2f1'])
+                .xAxis().ticks(0);;
+
+
+            AendernSchuleChart
+                .height(300)
+                .dimension(AendernSchuleDim)
+                .group(countPerAendernSchule)
+                .ordering(function(d) {
+                    return d['Anzahl Random']
+                })
+                .margins({
+                    top: 30,
+                    right: 30,
+                    bottom: -1,
+                    left: 30
+                })
+                .title(function(d) {
+                    return d.value
+                })
+                .renderTitleLabel(true)
+                .elasticX(true)
+                .ordinalColors(['#004D40', '#00796b', '#4db6ac', '#b2dfdb', '#c0f2f1'])
+                .xAxis().ticks(0);;
+
+
+
+            LieblingsfachChart
+                .height(300)
+                .dimension(LieblingsfachDim)
+                .group(countPerLieblingsfach)
+                .ordering(function(d) {
+                    return d['Anzahl Random']
+                })
+                .margins({
+                    top: 30,
+                    right: 30,
+                    bottom: -1,
+                    left: 30
+                }) 
+                .title(function(d) {
+                    return d.value
+                })
+                .renderTitleLabel(true)
+                .elasticX(true)
+                .ordinalColors(['#004D40', '#00796b', '#4db6ac', '#b2dfdb', '#c0f2f1'])
+                .xAxis().ticks(0);;
+
+            BerufswunschChart
+                .height(300)
+                .dimension(BerufswunschDim)
+                .group(countPerBerufswunsch)
+                .ordering(function(d) {
+                    return d['Anzahl Random']
+                })
+                .margins({
+                    top: 30,
+                    right: 30,
+                    bottom: -1,
+                    left: 30
+                })
+                .title(function(d) {
+                    return d.value
+                })
+                .renderTitleLabel(true)
+                .elasticX(true)
+                .ordinalColors(['#004D40', '#00796b', '#4db6ac', '#b2dfdb', '#c0f2f1'])
+                .xAxis().ticks(0);;
+
+            
+ SorgenSchuleChart
+                .height(300)
+                .dimension(SorgenSchuleDim)
+                .group(countPerSorgenSchule)
+                .ordering(function(d) {
+                    return d['Anzahl Random']
+                })
+                .margins({
+                    top: 30,
+                    right: 30,
+                    bottom: -1,
+                    left: 30
+                }) 
+                .title(function(d) {
+                    return d.value
+                })
+                .renderTitleLabel(true)
+                .elasticX(true)
+                .ordinalColors(['#004D40', '#00796b', '#4db6ac', '#b2dfdb', '#c0f2f1'])
+                .xAxis().ticks(0);;
+
+
+            SorgenAusbildungChart
+                .height(300)
+                .dimension(SorgenAusbildungDim)
+                .group(countPerSorgenAusbildung)
+                .ordering(function(d) {
+                    return d['Anzahl Random']
+                })
+                .margins({
+                    top: 30,
+                    right: 30,
+                    bottom: -1,
+                    left: 30
+                })
+                .title(function(d) {
+                    return d.value
+                })
+                .renderTitleLabel(true)
+                .elasticX(true)
+                .ordinalColors(['#004D40', '#00796b', '#4db6ac', '#b2dfdb', '#c0f2f1'])
+                .xAxis().ticks(0);;
+
+
+
+            SorgenFamilieChart
+                .height(300)
+                .dimension(SorgenFamilieDim)
+                .group(countPerSorgenFamilie)
+                .ordering(function(d) {
+                    return d['Anzahl Random']
+                })
+                .margins({
+                    top: 30,
+                    right: 30,
+                    bottom: -1,
+                    left: 30
+                }) 
+                .title(function(d) {
+                    return d.value
+                })
+                .renderTitleLabel(true)
+                .elasticX(true)
+                .ordinalColors(['#004D40', '#00796b', '#4db6ac', '#b2dfdb', '#c0f2f1'])
+                .xAxis().ticks(0);;
+
+            RassismusChart
+                .height(300)
+                .dimension(RassismusDim)
+                .group(countPerRassismus)
+                .ordering(function(d) {
+                    return d['Anzahl Random']
+                })
+                .margins({
+                    top: 30,
+                    right: 30,
+                    bottom: -1,
+                    left: 30
+                })
+                .title(function(d) {
+                    return d.value
+                })
+                .renderTitleLabel(true)
+                .elasticX(true)
+                .ordinalColors(['#004D40', '#00796b', '#4db6ac', '#b2dfdb', '#c0f2f1'])
+                .xAxis().ticks(0);;
+
+
+            dataCount
+                .dimension(ndx)
+                .group(all);
+
+
+
+            d3.selectAll('a#all').on('click', function() { 
+                dc.filterAll();
+                dc.redrawAll();
+            });
+
+            d3.selectAll('a#Geschlecht').on('click', function() {
+                GeschlechtChart.filterAll();
+                dc.redrawAll();
+            });
+
+            d3.selectAll('a#Alter').on('click', function() {
+                AlterChart.filterAll();
+                dc.redrawAll();
+            });
+
+            d3.selectAll('a#Schultyp').on('click', function() {
+                SchultypChart.filterAll();
+                dc.redrawAll();
+            });
+
+            d3.selectAll('a#Befragungsjahr').on('click', function() {
+                BefragungsjahrChart.filterAll();
+                dc.redrawAll();
+            });
+
+            d3.selectAll('a#GefallenSchule').on('click', function() {
+                GefallenSchuleChart.filterAll();
+                dc.redrawAll();
+            });
+
+            d3.selectAll('a#AendernSchule').on('click', function() {
+                AendernSchuleChart.filterAll();
+                dc.redrawAll();
+            });
+
+            d3.selectAll('a#Lieblingsfach').on('click', function() {
+                LieblingsfachChart.filterAll();
+                dc.redrawAll();
+            });
+
+            d3.selectAll('a#Berufswunsch').on('click', function() {
+                BerufswunschChart.filterAll();
+                dc.redrawAll();
+            });
+            
+            d3.selectAll('a#SorgenSchule').on('click', function() {
+                SorgenSchuleChart.filterAll();
+                dc.redrawAll();
+            });
+
+            d3.selectAll('a#SorgenAusbildung').on('click', function() {
+                SorgenAusbildungChart.filterAll();
+                dc.redrawAll();
+            });
+
+            d3.selectAll('a#Rassismus').on('click', function() {
+                RassismusChart.filterAll();
+                dc.redrawAll();
+            });
+
+            d3.selectAll('a#Berufswunsch').on('click', function() {
+                BerufswunschChart.filterAll();
+                dc.redrawAll();
+            });
+
+
+        
+            dc.renderAll();
+            console.log(dc.version);
+        });
+
+    </script>
+</body>
+
+</html>
